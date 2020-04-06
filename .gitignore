@@ -1,0 +1,10 @@
+sandbox/
+log/
+.snakemake/
+*.swp
+*.err 
+*.out
+*.ipynb_checkpoints/
+data/
+src/__pycache__/
+plots/snakemake_output/

@@ -1,0 +1,201 @@
+#!/bin/python3
+
+import numpy as np 
+import pandas as pd
+import sys
+sys.path.append('src/')
+shell.prefix("set -o pipefail; ")
+
+DATA_DIR = 'data/'
+TMP_DIR = 'scratch/'
+
+## Reading in parameter files for all of the VCF identification
+vcf_file_list_new = 'params/parfiles/vcf_files_new_1kg_hg38_filt.txt'
+VCF_DICT_NEW_HG38_FILT = pd.read_csv(vcf_file_list_new, sep='\s+', header=None).set_index(0).to_dict()[1]
+PREFIX_FINAL_FILT = 'new_1kg_nyc_hg38_filt'
+
+VCF_DICT = {}
+VCF_DICT[PREFIX_FINAL_FILT] = VCF_DICT_NEW_HG38_FILT
+
+# Setting the ancestral fasta file
+ANC_FASTA = DATA_DIR + 'reference_genomes/human_ancestor_GRCh38_e86.fa'
+
+# Bin Dictionary for number of categories
+bin_dict = {
+  '4': '[0.0, 0.01, 0.05]',
+  '3': '[0.0, 0.01]',
+  '3x': '[0.0, 0.05]',
+  '3c': '[0.0, 0.1]'
+}
+
+AUTOSOMES = np.arange(1,23)
+
+
+# -------------- Estimate Allele Frequencies --------------- # 
+"""
+  Estimating the allele frequency for each SNP 
+"""
+rule estimate_allele_freq:
+  input:
+    vcf = lambda wildcards : VCF_DICT[wildcards.PREFIX][int(wildcards.CHROM)],
+    pops = 'params/poplists/{poplist}.txt'
+  output:
+    tmp_vcf = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM,\d+}.biallelic_snps.{poplist}.frq.vcf.gz'),
+    freq = TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM,\d+}.biallelic_snps.{poplist}.frq.strat.gz'
+  run:
+    prefix = TMP_DIR + 'freq_set/%s_chr%s.biallelic_snps.%s' % (wildcards.PREFIX, wildcards.CHROM, wildcards.poplist)
+    shell('bcftools annotate --set-id \'%POS\' {input.vcf} | bcftools view -v snps -m2 -M2 | bgzip -@10 > {output.tmp_vcf}')
+    shell('plink --vcf {output.tmp_vcf} --double-id --freq gz --within {input.pops} --out {prefix}')
+
+"""
+  Generate files with the allele count and the total number of haplotypes
+"""
+rule calc_mac_total:
+  input:
+    freq = rules.estimate_allele_freq.output.freq,
+    pops = 'params/poplists/{poplist}.txt',
+    pop_labels = 'params/poplists/{poplist}_panel.txt'
+  output:
+    mac_temp = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.mac.txt.tmp.gz'),
+    total_temp = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.total.txt.tmp.gz'),
+    tmp_header = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.header.txt.tmp.gz'),
+    mac_temp2 = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.mac.txt.tmp2.gz'),
+    total_temp2 = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.total.txt.tmp2.gz'),
+    mac =  TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.mac.txt.gz',
+    total = TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.total.txt.gz'
+  shell:
+    """
+    python3 ./src/reformat_plink_freq.py --freq_file {input.freq} --pop_labels {input.pop_labels} --mac True --header True | bgzip -@10 > {output.mac_temp}
+    python3 ./src/reformat_plink_freq.py --freq_file {input.freq} --pop_labels {input.pop_labels} --mac False --header True | bgzip -@10 > {output.total_temp}
+    zcat {output.mac_temp} | head -n1 | gzip > {output.tmp_header}
+    zcat {output.mac_temp} | awk \'NR > 1 {{a[$2]++; b[$2]=$0}} END {{ for (c in a) {{ print b[c] }}}}\' | sort -n -k2 | gzip > {output.mac_temp2}
+    zcat {output.total_temp} | awk \'NR > 1 {{a[$2]++; b[$2]=$0}} END {{ for (c in a) {{ print b[c] }}}}\' | sort -n -k2 | gzip > {output.total_temp2}
+    cat {output.tmp_header} {output.mac_temp2} > {output.mac}
+    cat {output.tmp_header} {output.total_temp2} > {output.total}
+    rm -f {input.freq}
+    """
+
+rule gen_freq_table:
+  """
+    Generate a frequency table with frequencies per population 
+  """
+  input:
+    mac_total = rules.calc_mac_total.output.mac,
+    total_total = rules.calc_mac_total.output.total
+  output:
+    freq_table = TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.freq.txt.gz'
+  shell:
+    """
+      python3 src/gen_freq_table.py --mac {input.mac_total} --total {input.total_total} | bgzip -@10 > {output.freq_table}
+      rm {input.mac_total}
+      rm {input.total_total}
+    """
+
+
+# ------------- Collapsing ------------------ #
+rule collapse_freq_tables:
+  input:
+    expand(TMP_DIR + 'freq_set/{{PREFIX}}_chr{CHROM}.biallelic_snps.{{poplist}}.freq.txt.gz', CHROM=AUTOSOMES)
+  output:
+    tmp_total = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.freq.total.txt.gz'),
+    tmp_header = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.freq.tmp.header.txt.gz'),
+    total_freq = DATA_DIR + 'freq_set/totals/{PREFIX}_total.biallelic_snps.{poplist}.freq.total.txt.gz'
+  shell:
+    """
+    zcat {input} | grep -v ^CHR | gzip > {output.tmp_total}
+    zgrep CHR {input[0]} | gzip > {output.tmp_header}
+    cat {output.tmp_header} {output.tmp_total} > {output.total_freq}
+    """
+
+rule polarize_frequency_table:
+  """
+    Polarizing the frequency table to add the ancestral and derived alleles
+  """
+  input:
+    anc_fasta = ANC_FASTA,
+    freq_table = rules.collapse_freq_tables.output.total_freq
+  output:
+    temp_bed = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.anc.bed'),
+    anc_alleles = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.anc.txt'),
+    anc_alleles_final = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.anc.final.txt'),
+    tmp_col1 = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.anc.col1.txt'),
+    tmp_col2 = temp(TMP_DIR + 'freq_set/{PREFIX}_total.biallelic_snps.{poplist}.anc.col2.txt'),
+    polarized_freq = DATA_DIR + 'freq_set/totals/{PREFIX}_total.biallelic_snps.{poplist}.freq.polarized.txt.gz'
+  shell:
+    """
+    zcat {input.freq_table} | awk \'NR > 1 {{print $1\"\t\"$2-1\"\t\"$2}}\' > {output.temp_bed}
+    bedtools getfasta -fi {input.anc_fasta} -bed {output.temp_bed} | grep -v \"^>\" > {output.anc_alleles}
+    echo -e \"ANC\" | cat - {output.anc_alleles} > {output.anc_alleles_final}
+    cut -f-4 <(zcat {input.freq_table}) > {output.tmp_col1}
+    cut -f5- <(zcat {input.freq_table}) > {output.tmp_col2}
+    paste {output.tmp_col1} {output.anc_alleles_final} {output.tmp_col2} | bgzip > {output.polarized_freq}
+    """
+
+rule generate_geodist:
+  """
+    Generate a naive version of geodist
+  """
+  input:
+    rules.collapse_freq_tables.output.total_freq
+  output:
+    total_geodist = DATA_DIR + 'geodist/raw/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.geodist.total.txt.gz'
+  wildcard_constraints:
+    NCAT='(3|3x)',
+    poplist ='pops|superpops|superpops_amended2'
+  run:
+    bins = bin_dict[wildcards.NCAT]
+    shell('python3 src/geodist_naive.py --freqs {input} --bins \"{bins}\" | bgzip > {output.total_geodist}')
+
+
+rule generate_geodist_polarized:
+  """
+    Generate geodist with polarized data (ANC/Derived)
+  """
+  input:
+    rules.polarize_frequency_table.output.polarized_freq
+  output:
+    total_geodist = DATA_DIR +
+    'geodist/raw/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.polarized.geodist.total.txt.gz'
+  wildcard_constraints:
+    NCAT='(3|3x)',
+    poplist ='pops|superpops|superpops_amended2'
+  run:
+    bins = bin_dict[wildcards.NCAT]
+    shell('python3 src/geodist_naive.py --freqs {input} --bins \"{bins}\" --anc True --ancq True --strand False | bgzip > {output.total_geodist}')
+
+
+rule count_geodist_categories:
+  """
+    Rule to count number of geodist categories
+  """
+  input: rules.generate_geodist.output.total_geodist
+  output:
+    geodist_cnt =
+    DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt,\d+}.geodist_cnt.txt.gz'
+  wildcard_constraints:
+    poplist='pops|superpops|superpops_amended2'
+  shell:
+    '''
+    zcat {input} | awk \'NR > 1 && $5 > {wildcards.filt}\' | awk \'{{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_cnt}
+    ''' 
+
+rule count_geodist_categories_polarized:
+  """
+    Rule to count number of geodist categories
+  """
+  input: rules.generate_geodist_polarized.output.total_geodist
+  output:
+    geodist_cnt =
+    DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt,\d+}.polarized.geodist_cnt.txt.gz'
+  wildcard_constraints:
+    poplist='pops|superpops|superpops_amended2'
+  shell:
+    '''
+    zcat {input} | awk \'NR > 1 && $6 > {wildcards.filt}\' | awk \'{{counts[$8]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_cnt}
+    ''' 
+
+rule count_geodist_all:
+  input:
+    expand(DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt}.geodist_cnt.txt.gz', PREFIX=PREFIX_FINAL_FILT, filt=[0,1], NCAT=['3x','3'], poplist=['superpops_amended2']),
+    expand(DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt}.polarized.geodist_cnt.txt.gz', PREFIX=PREFIX_FINAL_FILT, filt=0, NCAT=['3x'], poplist=['superpops_amended2'])
+ 

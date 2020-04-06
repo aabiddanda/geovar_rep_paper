@@ -1,0 +1,195 @@
+#!/bin/python
+
+import numpy as np 
+import numpy as np 
+import pandas as pd
+import sys
+sys.path.append('src/')
+shell.prefix("set -o pipefail; ")
+
+# Define the data directory
+ANNO_DIR = 'data/anno/'
+DATA_DIR = 'data/'
+
+# Prefixes
+PREFIX_FINAL = 'new_1kg_nyc_hg38_filt'
+
+# Autosomes (essentially to parallelize across all chromosomes)
+AUTOSOMES = np.arange(1,23)
+
+# dictionary specifying the subsets of the
+SUBSETS = {}
+
+# -------------------- 1. Genotyping Arrays ---------------- #
+ARRAY_DIR = ANNO_DIR + 'array_variant_lists/'
+ARRAYS = {
+  "MEGA": ARRAY_DIR + 'Multi-EthnicAMR-AFR-8v1-0_A1.hg38.filtered.snplist',
+  "OmniExpress" : ARRAY_DIR + 'HumanOmniExpress-24-v1-0-B.hg38.filtered.snplist',
+  "Omni25Exome" : ARRAY_DIR + 'HumanOmni2-5Exome-8-v1-1-A.hg38.filtered.snplist',
+  "Affy6" : ARRAY_DIR + 'GenomeWideSNP_6.na34.annot.hg38.filtered.snplist',
+  "HumanOrigins" : ARRAY_DIR + 'Axiom_GW_HuOrigin.na34.annot.hg38.filtered.snplist'
+}
+SUBSETS.update(ARRAYS)
+
+# ------------------- 2. PGP Variants ---------------------- #
+PERSONAL_DIR = ANNO_DIR + 'pgp/'
+PERSONAL_GENOMES={
+  'hu6E9C24': PERSONAL_DIR + 'hu6E9C24.hg38.snplist',
+  'huE30103': PERSONAL_DIR + 'huE30103.hg38.snplist',
+  'hu7ECB9C': PERSONAL_DIR + 'hu7ECB9C.hg38.snplist',
+  'hu1B2689': PERSONAL_DIR + 'hu1B2689.hg38.snplist',
+  
+}
+SUBSETS.update(PERSONAL_GENOMES)
+
+# ------------------- 3. SGDP Comparisons ------------------ # 
+SGDP_PAIRED_DIR = '/home/abiddanda/novembre_lab2/data/external_public/geodist/anno/sgdp_paired/totals/'
+SGDP_DIR = '/home/abiddanda/novembre_lab2/data/external_public/sgdp/'
+SGDP_ID_FILE = SGDP_DIR + 'sgdp_id_pop.txt'
+SGDP_DF = pd.read_csv(SGDP_ID_FILE, sep='\s+')
+SGDP_IDS = SGDP_DF['Illumina_ID'].values
+POP_IDS = SGDP_DF['Population_ID'].values
+
+Yoruba_idxs = np.where(POP_IDS == 'Yoruba')[0]
+Han_idxs = np.where(POP_IDS == 'Han')[0]
+French_idxs = np.where(POP_IDS == 'French')[0]
+
+Yoruba_names = SGDP_IDS[Yoruba_idxs]
+Han_names = SGDP_IDS[Han_idxs]
+French_names = SGDP_IDS[French_idxs]
+
+SGDP_PAIRED = {}
+for i in Yoruba_names[0:1]:
+  for j in Yoruba_names[1:]:
+    SGDP_PAIRED['sgdp_paired/%s_%s' % (i,j)] = SGDP_PAIRED_DIR + 'paired_%s.%s.hg38.filtered.snplist' % (i,j)
+for i in Yoruba_names[0:1]:
+  for j in Han_names:
+    SGDP_PAIRED['sgdp_paired/%s_%s' % (i,j)] = SGDP_PAIRED_DIR + 'paired_%s.%s.hg38.filtered.snplist' % (i,j)
+for i in Yoruba_names[0:1]:
+  for j in French_names:
+    SGDP_PAIRED['sgdp_paired/%s_%s' % (i,j)] = SGDP_PAIRED_DIR + 'paired_%s.%s.hg38.filtered.snplist' % (i,j)
+for i in French_names[0:1]:
+  for j in Han_names:
+    SGDP_PAIRED['sgdp_paired/%s_%s' % (i,j)] = SGDP_PAIRED_DIR + 'paired_%s.%s.hg38.filtered.snplist' % (i,j)
+for i in French_names[0:1]:
+  for j in French_names[1:]:
+    SGDP_PAIRED['sgdp_paired/%s_%s' % (i,j)] = SGDP_PAIRED_DIR + 'paired_%s.%s.hg38.filtered.snplist' % (i,j)
+for i in Han_names[0:1]:
+  for j in Han_names[1:]:
+    SGDP_PAIRED['sgdp_paired/%s_%s' % (i,j)] = SGDP_PAIRED_DIR + 'paired_%s.%s.hg38.filtered.snplist' % (i,j)
+SUBSETS.update(SGDP_PAIRED)
+
+
+# --------------- Subsetting Frequencies ---------------- #
+rule subset_freq:
+  """ Extract frequencies for a particular set of variants """
+  input:
+    freq_table = rules.collapse_freq_tables.output.total_freq,
+    subset = lambda wildcards : SUBSETS[wildcards.subset]
+  output:
+    freq_subset_tmp_total = temp(TMP_DIR + 'subsets/{subset}/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.txt.gz'),
+    freq_subset_tmp_header = temp(TMP_DIR + 'subsets/{subset}/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.header.txt.gz'),
+    freq_subset = DATA_DIR + 'subsets/{subset}/freqs/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.txt.gz'
+  wildcard_constraints:
+    poplist='pops|superpops|superpops_amended|superpops_amended2'
+  shell:
+    """
+    awk \'NR == FNR {{a[$1,$2]++; next}} ($1,$2) in a\' {input.subset} <(zcat {input.freq_table}) | bgzip -@10 > {output.freq_subset_tmp_total}
+    zcat {input.freq_table} | head -n 1 | bgzip > {output.freq_subset_tmp_header}
+    cat {output.freq_subset_tmp_header} {output.freq_subset_tmp_total} > {output.freq_subset}
+    """
+
+    
+# -------------- Running GeoDist ---------------------- #    
+rule run_geodist_collapsed_subset:
+  """ Running Geodist with a subsetted set of frequencies """
+  input:
+    total_freqs = rules.subset_freq.output.freq_subset 
+  output:
+    geodist = DATA_DIR + 'subsets/{subset}/geodist/{PREFIX}_total.biallelic_snps.{poplist}.ncat_{NCAT}.geodist.subset.txt.gz'
+  wildcard_constraints:
+    PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
+    poplist='pops|superpops|superpops_amended|superpops_amended2',
+    NCAT='3|4|3x'
+  run:
+    bins = bin_dict[wildcards.NCAT]
+    shell('python3 src/geodist_naive.py --freqs {input.total_freqs} --bins \"{bins}\" | bgzip > {output.geodist}')
+
+    
+# ------------- Counting & Subsetting ---------------- #
+rule count_geodist_categories_subset:
+  """ Count the geodist categories of each subset of variants """
+  input:
+    subset = lambda wildcards : SUBSETS[wildcards.subset],
+    geodist = rules.run_geodist_collapsed_subset.output.geodist
+  output:
+    geodist_tmp_subset = temp('data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.tmp.txt.gz'),
+    geodist_subset = 'data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.txt.gz'
+  wildcard_constraints:
+    PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
+    poplist='pops|superpops|superpops_amended|superpops_amended2',
+    NCAT='3|4|3x'
+  shell:
+    '''
+    zcat {input.geodist} | awk \'NR > 1 {{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_tmp_subset}
+    npops=$(zcat {output.geodist_tmp_subset} | awk \'{{ print length($1)}}\' | head -n 1)
+    empty_geodist=$(printf \'0%.0s\' $(seq 1 $npops))
+    nsnps_raw=$(cat {input.subset} | wc -l)
+    nsnps_1kg=$(zcat {output.geodist_tmp_subset} |awk \'{{sum+=$2}} END {{print sum}}\')
+    echo $nsnps_raw $nsnps_1kg
+    diff_snps=$(echo \"$nsnps_raw - $nsnps_1kg\" | bc) 
+    echo \"$empty_geodist $diff_snps\" | bgzip | zcat - {output.geodist_tmp_subset} | bgzip > {output.geodist_subset}
+    '''
+    
+rule count_geodist_categories_subset_all:
+  input:
+    expand('data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.txt.gz', PREFIX=PREFIX_FINAL, poplist=['superpops_amended2'], NCAT=['3x'], subset=SGDP_PAIRED.keys())
+
+# rule filter_maf_subsets:
+#   """ Filter subsets by global MAC"""
+#   input:
+#     subset_freq = rules.subset_freq.output.freq_subset
+#   output:
+#     filt_freq = DATA_DIR + 'subsets/{subset}/freqs/{PREFIX}_total.biallelic_snps.{poplist}.freq.filt_{filt}.subset.txt.gz'
+#   wildcard_constraints:
+#     PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
+#     poplist='pops|superpops|superpops_amended|superpops_amended2',
+#     NCAT='3|4|3x'
+#   shell:
+#     """
+#     zcat {input.subset_freq} | awk \'NR==1; NR > 1 && $5 > {wildcards.filt}\' | bgzip > {output.filt_freq}
+#     """
+  
+# rule run_geodist_collapsed_subset_filtered:
+#   """ Runs GeoDist on a set of variants filtered by Global MAC"""
+#   input:
+#     rules.filter_maf_subsets.output.filt_freq
+#   output:
+#     geodist_filt = DATA_DIR + 'subsets/{subset}/geodist/{PREFIX}_total.biallelic_snps.{poplist}.ncat_{NCAT}.geodist.filt_{filt}.subset.txt.gz'
+#   wildcard_constraints:
+#     PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
+#     poplist='pops|superpops|superpops_amended|superpops_amended2',
+#     NCAT='3|4|3x'
+#   run:
+#     bins = bin_dict[wildcards.NCAT]
+#     shell('python3 src/geodist_naive.py --freqs {input} --bins \"{bins}\" | bgzip > {output.geodist_filt}')     
+    
+# rule count_geodist_categories_subset_filtered:
+#   """ Count the geodist categories of each subset of variants """
+#   input: 
+#     rules.run_geodist_collapsed_subset_filtered.output.geodist_filt
+#   output:
+#     geodist_subset= 'data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.filt_{filt}.geodist_cnt.txt.gz'
+#   wildcard_constraints:
+#     PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
+#     poplist='pops|superpops|superpops_amended|superpops_amended2',
+#     alt='naive|alt',
+#     NCAT='3|4|3x'
+#   shell:
+#     '''
+#     zcat {input} | awk \'NR > 1 {{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_subset}
+#     '''
+
+# rule generate_filtered_geodists_final:
+#   input:
+#     expand('data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.filt_{filt}.geodist_cnt.txt.gz', subset=SUBSETS.keys(), PREFIX=PREFIX_FINAL, filt=[0,1], NCAT=['3x', '3'], poplist='superpops_amended2')

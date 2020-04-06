@@ -1,0 +1,29 @@
+{
+	  "__default__":
+	{
+      "time" : "3:00:00",
+      "mem": "1G",
+      "out": "log/{rule}-%j.out",
+      "err": "log/{rule}-%j.err",
+      "partition": "jnovembre",
+      "ncores": "1"
+	},
+	  "filter_to_pass":
+	{
+      "time" : "3:00:00",
+      "mem": "5G",
+      "out": "log/{rule}-%j.out",
+      "err": "log/{rule}-%j.err",
+      "partition": "jnovembre",
+      "ncores": "5"
+	},
+    "generate_geodist_naive":
+	{
+      "time" : "3:00:00",
+      "mem": "5G",
+      "out": "log/{rule}-%j.out",
+      "err": "log/{rule}-%j.err",
+      "partition": "jnovembre",
+      "ncores": "5"
+	}
+}

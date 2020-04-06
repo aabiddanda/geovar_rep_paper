@@ -1,0 +1,17 @@
+name: geodist
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - python
+  - scipy
+  - click
+  - tqdm
+  - pyliftover
+  - jupyterlab
+prefix: /Users/danielrice/miniconda3/envs/geodist
+
