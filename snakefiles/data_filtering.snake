@@ -24,12 +24,6 @@ rule filter_to_pass:
     tabix -f {output.out_vcf}
     '''
     
-rule filter_to_pass_total:
-  input:
-    expand(VCF_DIR + 'new_1kg_nygc_chr{CHROM}.biallelic_snps.filt.vcf.gz', CHROM=AUTOSOMES)
-
-    
-
 rule get_paired_sgdp_snplist:
   input:
     SGDP_VCFs = expand(SGDP_DIR  + 'merged/sgdp_total_merged_chr{CHROM}.vcf.gz', CHROM=AUTOSOMES)

@@ -91,7 +91,6 @@ rule gen_freq_table:
       rm {input.total_total}
     """
 
-
 # ------------- Collapsing ------------------ #
 rule collapse_freq_tables:
   input:
