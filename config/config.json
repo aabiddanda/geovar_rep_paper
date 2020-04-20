@@ -1,0 +1,8 @@
+{
+   "DATA_DIR":"data/",
+   "ANNO_DIR":"data/anno/",
+   "TMP_DIR":"scratch/",
+   "PREFIX":"new_1kg_nyc_hg38_filt",
+   "VCF_FILE_LIST":"params/parfiles/vcf_files_new_1kg_hg38_filt.txt",
+   "SGDP_ID_FILE":"params/parfiles/sgdp_id_pop.txt"
+}
