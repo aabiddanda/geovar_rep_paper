@@ -17,7 +17,7 @@ DATA_DIR = config['DATA_DIR']
 SUBSETS = {}
 
 # -------------------- 1. Genotyping Arrays ---------------- #
-ARRAY_DIR = ANNO_DIR + 'array_variant_lists/'
+ARRAY_DIR = ANNO_DIR + 'genotyping_arrays/'
 ARRAYS = {
   "MEGA": ARRAY_DIR + 'Multi-EthnicAMR-AFR-8v1-0_A1.hg38.filtered.snplist.gz',
   "OmniExpress" : ARRAY_DIR + 'HumanOmniExpress-24-v1-0-B.hg38.filtered.snplist.gz',
@@ -73,7 +73,7 @@ rule subset_freq:
   output:
     freq_subset_tmp_total = temp(TMP_DIR + 'subsets/{subset}/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.txt.gz'),
     freq_subset_tmp_header = temp(TMP_DIR + 'subsets/{subset}/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.header.txt.gz'),
-    freq_subset = DATA_DIR + 'freq/subsets/{subset}/freqs/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.txt.gz'
+    freq_subset = DATA_DIR + 'freq/subsets/{subset}/{PREFIX}_total.biallelic_snps.{poplist}.freq.subset.txt.gz'
   wildcard_constraints:
     poplist='pops|superpops|superpops_amended|superpops_amended2'
   shell:
@@ -90,14 +90,14 @@ rule run_geodist_collapsed_subset:
   input:
     total_freqs = rules.subset_freq.output.freq_subset 
   output:
-    geodist = DATA_DIR + 'geodist/subsets/{subset}/geodist/{PREFIX}_total.biallelic_snps.{poplist}.ncat_{NCAT}.geodist.subset.txt.gz'
+    geodist = DATA_DIR + 'geodist/subsets/{subset}/{PREFIX}_total.biallelic_snps.{poplist}.ncat_{NCAT}.geodist.subset.txt.gz'
   wildcard_constraints:
     PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
     poplist='pops|superpops|superpops_amended|superpops_amended2',
     NCAT='3|4|3x'
   run:
     bins = bin_dict[wildcards.NCAT]
-    shell('python3 src/geodist_naive.py --freqs {input.total_freqs} --bins \"{bins}\" | bgzip > {output.geodist}')
+    shell('python3 src/geodist.py --freqs {input.total_freqs} --bins \"{bins}\" | bgzip > {output.geodist}')
 
 
 # ------------- Counting & Subsetting ---------------- #
@@ -107,8 +107,8 @@ rule count_geodist_categories_subset:
     subset = lambda wildcards : SUBSETS[wildcards.subset],
     geodist = rules.run_geodist_collapsed_subset.output.geodist
   output:
-    geodist_tmp_subset = temp('data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.tmp.txt.gz'),
-    geodist_subset = 'data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.txt.gz'
+    geodist_tmp_subset = temp(TMP_DIR + 'data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.tmp.txt.gz'),
+    geodist_subset = 'data/geodist/counts/subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.txt.gz'
   wildcard_constraints:
     PREFIX = 'new_1kg_nyc_hg38|new_1kg_nyc_hg38_filt',
     poplist='pops|superpops|superpops_amended|superpops_amended2',
@@ -118,7 +118,7 @@ rule count_geodist_categories_subset:
     zcat {input.geodist} | awk \'NR > 1 {{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_tmp_subset}
     npops=$(zcat {output.geodist_tmp_subset} | awk \'{{ print length($1)}}\' | head -n 1)
     empty_geodist=$(printf \'0%.0s\' $(seq 1 $npops))
-    nsnps_raw=$(cat {input.subset} | wc -l)
+    nsnps_raw=$(zcat {input.subset} | wc -l)
     nsnps_1kg=$(zcat {output.geodist_tmp_subset} |awk \'{{sum+=$2}} END {{print sum}}\')
     echo $nsnps_raw $nsnps_1kg
     diff_snps=$(echo \"$nsnps_raw - $nsnps_1kg\" | bc) 
@@ -127,4 +127,4 @@ rule count_geodist_categories_subset:
 
 rule count_geodist_categories_subset_all:
   input:
-    expand('data/geodist_counts_subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.txt.gz', PREFIX=config['PREFIX'], poplist=['superpops_amended2'], NCAT=['3x'], subset=SGDP_PAIRED.keys())
+    expand('data/geodist/counts/subsets/{subset}/{PREFIX}_{poplist}_{NCAT}.geodist_cnt.txt.gz', PREFIX=config['PREFIX'], poplist=['superpops_amended2'], NCAT=['3x'], subset=SUBSETS.keys())

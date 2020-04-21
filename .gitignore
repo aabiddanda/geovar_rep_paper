@@ -1,10 +1,12 @@
 sandbox/
+notebooks/
 log/
 .snakemake/
 *.swp
 *.err 
 *.out
 *.ipynb_checkpoints/
+plots/
 data/
 src/__pycache__/
-plots/snakemake_output/
+snakemake_output/

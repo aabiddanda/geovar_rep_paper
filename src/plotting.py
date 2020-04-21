@@ -85,12 +85,12 @@ class GeoDistPlot:
     if filt_unobserved:
       unobserved_geodist = '0' * npops[0]
       idx = np.where(geodist == unobserved_geodist)[0]
-      if idx.size == 1:
+      if idx.size >= 1:
         self.orig_missing = ngeodist[idx][0]
         geodist = np.delete(geodist, idx)
         ngeodist = np.delete(ngeodist, idx)
       else:
-        raise ValueError('')
+        raise ValueError('No excluded variants!')
     assert(len(np.unique(npops)) <= 1)
     self.orig_npops = npops[0]
     self.orig_geodist = geodist
@@ -189,7 +189,18 @@ class GeoDistPlot:
     pops = np.loadtxt(popfile, dtype=str)
     assert(pops.size == self.npops)
     self.poplist = pops
-
+  
+  def _reorder_pops(self, new_poplist):
+    """ Reordering populations within a geodist instance """
+    assert(new_poplist.size == self.poplist.size)
+    new_pop_idx = np.hstack([np.where(self.poplist == i)[0] for i in new_poplist])
+    acc = []
+    for j in range(self.orig_ngeodist.size):
+        acc.append(''.join([self.orig_geodist[j][i] for i in new_pop_idx]))
+    new_geodist = np.array(acc)
+    self.orig_geodist = new_geodist
+    self.poplist = new_poplist
+    
   def _add_poplabels_manual(self, poplabels):
     """ Adding population labels here """
     assert(self.geodist is not None)
@@ -199,7 +210,7 @@ class GeoDistPlot:
     assert(poplabels.size == self.npops)
     self.poplist = poplabels
 
-  def plot_geodist(self, ax):
+  def plot_geodist(self, ax, superpops=None, superpop_lbls=None):
     """ Final function to call to generate a geodist plot on a particular axis """
     # Starting assertions to make sure we can call this
     assert(self.geodist is not None)
@@ -219,7 +230,11 @@ class GeoDistPlot:
     # setting up the vertical lines
     for x in xbar_pts:
       ax.axvline(x=x, color=self.bar_color, lw=self.line_weight, alpha=self.alpha);
-
+    
+    if superpops is not None:
+      for i in superpops:
+        ax.axvline(x = xbar_pts[i], color='gray', lw=1.0)
+    
     # changing the border color
     for spine in ax.spines.values():
       spine.set_edgecolor(self.border_color);
@@ -264,8 +279,8 @@ class GeoDistPlot:
   def plot_percentages(self, ax):
     """ Generates a plot with the percentages  """
     ns = self.ngeodist
-    fracs = ns/np.sum(ns)
-    cum_frac = np.cumsum(fracs)
+    fracs = ns / np.sum(ns)
+    cum_frac = np.cumsum(self.fgeodist)
     # Setting the border here
     for spine in ax.spines.values():
       spine.set_edgecolor(self.border_color);
@@ -278,11 +293,12 @@ class GeoDistPlot:
       nstr = '{:,}'.format(ns[i])
       ax.text(x=0.01, y=prev+ydist, s = '%s (%d%%)' % (nstr,int(fracs[i]*100)), va='center', fontsize=self.fontsize*fontscale)
       prev = cum_frac[i]
+    ax.set_ylim(0,1)
     return(ax)
       
 
     
-def plot_multiple_geodist(geodist_obj_list, subsets, xsize=1, ysize=4, hwidth=0.1, top_buff=0.5, bot_buff = 0.5, left_buff = 0.75, ylabel='Cumulative fraction of variants'):
+def plot_multiple_geodist(geodist_obj_list, subsets, xsize=1, ysize=4, hwidth=0.1, top_buff=0.5, bot_buff = 0.5, left_buff = 0.75, ylabel='Cumulative fraction of variants', superpops=None, superpop_lbls=None):
     """
       Function to plot a list of geodist objects 
       NOTE : this is a preliminary function currently 
@@ -311,19 +327,22 @@ def plot_multiple_geodist(geodist_obj_list, subsets, xsize=1, ysize=4, hwidth=0.
         subset = subsets[i]
         cur_geodist = geodist_obj_list[i]
         cur_geodist.fontsize = 14
-        _, nsnps, _ = cur_geodist.plot_geodist(ax=axs[i])
+        _, nsnps, _ = cur_geodist.plot_geodist(ax=axs[i], superpops=superpops, superpop_lbls=superpop_lbls)
         axs[i].set_xticklabels(cur_geodist.poplist, fontsize=10, rotation=90, ha='center')
-        n = np.sum(cur_geodist.ngeodist)
-        nstr = '{:,}'.format(n)
         if cur_geodist.orig_missing is not None:
+          
+          n = np.sum(cur_geodist.orig_ngeodist) + cur_geodist.orig_missing
+          nstr = '{:,}'.format(n)
           nmiss_str = '{:,}'.format(cur_geodist.orig_missing)
-          axs[i].set_title('%s\n (S = %s)\n(%s filtered)' % (subset, nstr, nmiss_str), fontsize=10)
+          axs[i].set_title('%s\n $S$ = %s\n$S_u$ = %s (%d%%)' % (subset, nstr, nmiss_str, int(cur_geodist.orig_missing/n*100)), fontsize=10)
         else:
-          axs[i].set_title('%s\n (S = %s)' % (subset,nstr), fontsize=10)
+          n = np.sum(cur_geodist.orig_ngeodist)
+          nstr = '{:,}'.format(n)
+          axs[i].set_title('%s\n S = %s' % (subset,nstr), fontsize=10)
     axs[0].set_ylabel(ylabel, fontsize=14)
     return(fig, axs)    
 
-def plot_geodist_w_percentages(geodist_obj, subset="", xsize=1, ysize=4, hwidth=0.1, top_buff=0.5, bot_buff = 0.5, left_buff = 0.75):
+def plot_geodist_w_percentages(geodist_obj, subset="", ylabel='Cumulative fraction of variants', xsize=1, ysize=4, hwidth=0.1, top_buff=0.5, bot_buff = 0.5, left_buff = 0.75, superpops=None, superpop_lbls=None):
     """
       Function to plot a list of geodist objects 
       NOTE : this is a preliminary function currently 
@@ -349,17 +368,17 @@ def plot_geodist_w_percentages(geodist_obj, subset="", xsize=1, ysize=4, hwidth=
     
 
     geodist_obj.fontsize = 14
-    _, nsnps, _ = geodist_obj.plot_geodist(ax=axs[0])
+    _, nsnps, _ = geodist_obj.plot_geodist(ax=axs[0], superpops=superpops, superpop_lbls=superpop_lbls)
     axs[0].set_xticklabels(geodist_obj.poplist, fontsize=10, rotation=90, ha='center')
     n = np.sum(geodist_obj.orig_ngeodist)
     nstr = '{:,}'.format(n)
     #  Setting the title figures
-    axs[0].text(1.0 + (hwidth/fig_width), 1.01, '%s\n (n = %s)' % (subset,nstr), 
+    axs[0].text(1.0 + (hwidth/fig_width), 1.01, '%s\n (S = %s)' % (subset,nstr), 
                 va='bottom', ha='center', fontsize=14)
-    geodist_obj.fontsize=8
+    geodist_obj.fontsize=12
     geodist_obj.plot_percentages(axs[1])
     axs[1].set_xticks([]);
-    axs[0].set_ylabel(r'Cumulative fraction of variants', fontsize=14)
+    axs[0].set_ylabel(ylabel, fontsize=14)
     return(fig, axs)  
   
   

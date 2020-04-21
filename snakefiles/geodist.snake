@@ -123,23 +123,6 @@ rule generate_geodist:
     shell('python3 src/geodist.py --freqs {input} --bins \"{bins}\" | bgzip > {output.total_geodist}')
 
 
-# rule generate_geodist_polarized:
-#   """
-#     Generate geodist with polarized data (ANC/Derived)
-#   """
-#   input:
-#     rules.polarize_frequency_table.output.polarized_freq
-#   output:
-#     total_geodist = DATA_DIR +
-#     'geodist/raw/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.polarized.geodist.total.txt.gz'
-#   wildcard_constraints:
-#     NCAT='(3|3x)',
-#     poplist ='pops|superpops|superpops_amended2'
-#   run:
-#     bins = bin_dict[wildcards.NCAT]
-#     shell('python3 src/geodist_naive.py --freqs {input} --bins \"{bins}\" --anc True --ancq True --strand False | bgzip > {output.total_geodist}')
-
-
 rule count_geodist_categories:
   """
     Rule to count number of geodist categories
@@ -155,21 +138,7 @@ rule count_geodist_categories:
     zcat {input} | awk \'NR > 1 && $5 > {wildcards.filt}\' | awk \'{{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_cnt}
     ''' 
 
-# rule count_geodist_categories_polarized:
-#   """
-#     Rule to count number of geodist categories
-#   """
-#   input: rules.generate_geodist_polarized.output.total_geodist
-#   output:
-#     geodist_cnt =
-#     DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt,\d+}.polarized.geodist_cnt.txt.gz'
-#   wildcard_constraints:
-#     poplist='pops|superpops|superpops_amended2'
-#   shell:
-#     '''
-#     zcat {input} | awk \'NR > 1 && $6 > {wildcards.filt}\' | awk \'{{counts[$8]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_cnt}
-#     ''' 
 
 rule count_geodist_all:
   input:
-    expand(DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt}.geodist_cnt.txt.gz', PREFIX=PREFIX_FINAL_FILT, filt=[0], NCAT=['3x'], poplist=['superpops_amended2'])
+    expand(DATA_DIR + 'geodist/counts/total/{PREFIX}_total.biallelic_snps.{poplist}.ncat{NCAT}.filt_{filt}.geodist_cnt.txt.gz', PREFIX=PREFIX_FINAL_FILT, filt=[0,1], NCAT=['3x','3'], poplist=['superpops_amended2'])

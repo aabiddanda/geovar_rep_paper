@@ -1,0 +1,73 @@
+#!/bin/python
+
+configfile: "config/config.json"
+
+import numpy as np 
+import numpy as np 
+import pandas as pd
+import sys
+sys.path.append('src/')
+shell.prefix("set -o pipefail; ")
+
+# Define the data directory
+ANNO_DIR = config['ANNO_DIR']
+DATA_DIR = config['DATA_DIR']
+
+# ------------ 0. Preliminaries for plotting ----------------- # 
+rule plotting_prelims:
+  input:
+    rules.count_geodist_categories_subset_all.input,
+    rules.count_geodist_all.input
+
+
+# --------------- 1. Overall Figures ----------------------- # 
+rule plot_overall_figures:
+  input:
+    rules.plotting_prelims.input
+  output:
+    overall_5bin = 'plots/overall_figs/superpops.5percent.all.pdf',
+    overall_5bin_nosing = 'plots/overall_figs/superpops.5percent.nosingletons.pdf',
+    overall_1bin = 'plots/overall_figs/superpops.1percent.all.pdf',
+    overall_1bin_nosing = 'plots/overall_figs/superpops.1percent.nosingletons.pdf'
+  shell:
+    """
+      cd doc/
+      python3 plot_overall.py
+      cd ..
+    """
+
+
+# --------------- 2. Plotting Array Figures ---------------- #
+rule plot_genotyping_array_figures:
+  input:
+    rules.plotting_prelims.input
+  output:
+    array_gallery = 'plots/array_figs/array_fig.5percent.pdf'
+  shell:
+    """
+      cd doc/
+      python3 plot_arrays.py
+      cd ..
+    """
+
+# # --------------- 3. SGDP Figure Generation --------------- # 
+# rule plot_sgdp_figures:
+#   input:
+#     rules.plotting_prelims.input
+#   output:
+#     sgdp_gallery = 'plots/sgdp_figs/'
+#   shell:
+#     """
+#       python3 doc/
+#     """
+    
+# # --------------- 4. Theory Figure Generation ------------- #
+# rule plot_theory_figures:
+#   output:
+#     theory_geodist_gallery = '',
+#     theory_
+#   shell:
+#     """
+#       python3 doc/
+#     """
+  
