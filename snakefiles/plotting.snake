@@ -37,7 +37,7 @@ rule plot_overall_figures:
     """
 
 
-# --------------- 2. Plotting Array Figures ---------------- #
+# --------------- 2. Genotyping Array Figures ---------------- #
 rule plot_genotyping_array_figures:
   input:
     rules.plotting_prelims.input
@@ -50,24 +50,38 @@ rule plot_genotyping_array_figures:
       cd ..
     """
 
-# # --------------- 3. SGDP Figure Generation --------------- # 
-# rule plot_sgdp_figures:
-#   input:
-#     rules.plotting_prelims.input
-#   output:
-#     sgdp_gallery = 'plots/sgdp_figs/'
-#   shell:
-#     """
-#       python3 doc/
-#     """
+# --------------- 3. SGDP Figures Generation --------------- # 
+rule plot_sgdp_figures:
+  input:
+    rules.plotting_prelims.input
+  output:
+    sgdp_gallery = 'plots/sgdp_figs/sgdp_panel_geodist.filt_lvl1.pdf'
+  shell:
+    """
+      cd doc/
+      python3 plot_sgdp.py
+      cd ..
+    """
     
-# # --------------- 4. Theory Figure Generation ------------- #
-# rule plot_theory_figures:
-#   output:
-#     theory_geodist_gallery = '',
-#     theory_
-#   shell:
-#     """
-#       python3 doc/
-#     """
-  
+#--------------- 4. Theory Figures Generation ------------- #
+rule plot_theory_figures:
+  output:
+    theory_geodist_gallery = 'plots/theory_figs/template_theory_fig.pdf',
+    theory_envelopes = 'plots/theory_figs/heuristic_fig.pdf'
+  shell:
+    """
+      cd doc/
+      python3 heuristic_figure.py
+      python3 plot_jsfs_theory.py
+      cd ..
+    """
+    
+rule gen_all_plots:
+  """
+    Meta-Rule to generate all of the main figures! 
+  """
+  input:
+    rules.plot_overall_figures.output,
+    rules.plot_genotyping_array_figures.output,
+    rules.plot_sgdp_figures.output,
+    rules.plot_theory_figures.output
