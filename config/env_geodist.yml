@@ -12,6 +12,6 @@ dependencies:
   - click
   - tqdm
   - pyliftover
-  - jupyterlab
+  - snakemake-minimal
 prefix: /Users/danielrice/miniconda3/envs/geodist
 

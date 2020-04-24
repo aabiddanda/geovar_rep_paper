@@ -4,11 +4,11 @@ Repository to replicate results from the GeoDist paper
 
 ## Installation Requirements
 
-We have setup an [Anaconda](https://www.anaconda.com/distribution/) environment to ensure accurate replication of results and management of dependencies. You can create the relevant environment by running:
+We have setup an [Anaconda](https://www.anaconda.com/distribution/) environment to ensure accurate replication of results and management of dependencies. We suggest using this with miniconda. You can create the relevant environment by running:
 
 ```
-conda env create -f config/environment.yml
-source activate geodist
+conda env create -f config/env_geodist.yml
+conda activate geodist
 ```
 
 ## Working from intermediate data
@@ -20,7 +20,7 @@ wget <dropbox link>
 tar -xvf <data.tar.gz>
 ```
 
-The prepackaged datasets contain: (1) an allele frequency table [more details below] and (2) the relevant SNP lists for comparing across datasets. 
+The prepackaged datasets contain: (1) an allele frequency table and (2) the relevant SNP lists for comparing across datasets. 
 
 Alternatively, the step of generating "Geographic distribution Codes" for the entire NYGC 1000 Genomes hg38 dataset takes ~40 minutes due to iterating over all of the variants. If you are interesting in using the same allele frequency binning that we have, we highly suggest downloading this dataset. If you would like to avoid this step and use the pre-specified codes we have generated in our analysis:
 
@@ -36,10 +36,10 @@ You can execute either of these steps using `snakemake` as `snakemake download_d
 If you have the `geodist` conda environment activated, all you should need to do in order to recreate the various plots :
 
 ```
-snakemake gen_all_plots --cores <number of cores> 
+snakemake gen_all_plots --cores <number of cores> --dryrun 
 ```
 
-Before doing so include the `--dryrun` flag to visually see all of the various rules run throughout the pipeline. After running the pipeline, you should be able to see the major figures in the `plots` directory as PDFs. Note that these are somewhat different from the versions in the manuscript as they have not been annotated.  
+You can remove the `--dryrun` flag to actually run the pipeline. After running the pipeline, you should be able to see the major figures in the `plots` directory as PDFs. Note that these are somewhat different from the versions in the manuscript as they have not been annotated.  
 
 ## Questions
 

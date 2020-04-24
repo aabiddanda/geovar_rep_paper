@@ -8,10 +8,9 @@ include: 'snakefiles/subsets.snake'
 include: 'snakefiles/plotting.snake'
 
 
-
-
-
 rule download_data:
+  output:
+    "data/"
   shell:
     """
       wget <data.tar.gz>
@@ -19,17 +18,12 @@ rule download_data:
     """
   
     
-    
 rule download_data_w_geodist:
+  output:
+    "data/"
   shell:
     """
       wget <data_geodist.tar.gz>
       tar -xvf <data_geodist.tar.gz>
     """
 
-    
-# rule total_clean:
-#   shell:
-#     """
-#     """
-    

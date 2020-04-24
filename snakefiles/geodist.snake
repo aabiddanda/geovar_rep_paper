@@ -38,7 +38,7 @@ rule estimate_allele_freq:
   """
   input:
     vcf = lambda wildcards : VCF_DICT[wildcards.PREFIX][int(wildcards.CHROM)],
-    pops = 'params/poplists/{poplist}.txt'
+    pops = 'params/parfiles/{poplist}.txt'
   output:
     tmp_vcf = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM,\d+}.biallelic_snps.{poplist}.frq.vcf.gz'),
     freq = TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM,\d+}.biallelic_snps.{poplist}.frq.strat.gz'
