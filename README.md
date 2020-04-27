@@ -12,13 +12,13 @@ conda activate geodist
 
 ## Working from intermediate data
 
-The pipeline we have written uses the popular workflow managment system, [snakemake](). We refer users to the documentation there in order to understand the various rules and dependencies. The step of generating "Geographic distribution Codes" for the entire NYGC 1000 Genomes hg38 dataset takes ~40 minutes due to iterating over all ~92 million variants. If you are interesting in using the same allele frequency binning that we have, we highly suggest downloading an pre-computed dataset below:
+The pipeline we have written uses the popular workflow managment system, [snakemake](https://snakemake.readthedocs.io/en/stable/). We refer users to the documentation there in order to understand the various rules and dependencies. The step of generating "Geographic distribution Codes" for the entire NYGC 1000 Genomes hg38 dataset takes ~40 minutes due to iterating over all ~92 million variants. If you are interesting in using the same allele frequency binning that we have, we highly suggest downloading an pre-computed dataset below:
 
 ```
 snakemake download_minimal_data --cores <number of cores> 
 ```
 
-If you are interested in generating the geodist codes from scratch - remove the `data/geodist` subdirectory and then run the command in the following section to regenerate all plots. Be warned that this can take a considerable amount of time and is best done on a HPC cluster (additionally this regeneration step has largely been tested in Linux).
+If you are interested in generating the geodist codes from scratch - remove the `data/geodist` subdirectory and then run the command in the following section to regenerate all plots. Be warned that this can take a considerable amount of time and is best done on a HPC cluster (and has only been tested in Linux).
 
 ## Generating main plots
 
