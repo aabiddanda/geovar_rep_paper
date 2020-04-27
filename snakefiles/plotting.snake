@@ -20,7 +20,20 @@ rule plotting_prelims:
     rules.count_geodist_all.input
 
 
-# --------------- 1. Overall Figures ----------------------- # 
+# ------------- 1. Full Population Plot ---------------------# 
+rule plot_full_pops:
+  input:
+    'data/freq/new_1kg_nyc_hg38_filt_chr22.biallelic_snps.pops.freq.txt.gz'
+  output:
+    'plots/full_pop_plots/full_pop_fig1.pdf'
+  shell:
+    """
+    cd doc/
+    python3 plot_full_pop.py
+    cd ..
+    """
+
+# --------------- 2. Overall Figures ----------------------- # 
 rule plot_overall_figures:
   input:
     rules.plotting_prelims.input
@@ -37,7 +50,7 @@ rule plot_overall_figures:
     """
 
 
-# --------------- 2. Genotyping Array Figures ---------------- #
+# --------------- 3. Genotyping Array Figures ---------------- #
 rule plot_genotyping_array_figures:
   input:
     rules.plotting_prelims.input
@@ -50,7 +63,7 @@ rule plot_genotyping_array_figures:
       cd ..
     """
 
-# --------------- 3. SGDP Figures Generation --------------- # 
+# --------------- 4. SGDP Figures Generation --------------- # 
 rule plot_sgdp_figures:
   input:
     rules.plotting_prelims.input
@@ -63,7 +76,7 @@ rule plot_sgdp_figures:
       cd ..
     """
     
-#--------------- 4. Theory Figures Generation ------------- #
+#--------------- 5. Theory Figures Generation ------------- #
 rule plot_theory_figures:
   output:
     theory_geodist_gallery = 'plots/theory_figs/template_theory_fig.pdf',
@@ -81,6 +94,7 @@ rule gen_all_plots:
     Meta-Rule to generate all of the main figures! 
   """
   input:
+    rules.plot_full_pops.output,
     rules.plot_overall_figures.output,
     rules.plot_genotyping_array_figures.output,
     rules.plot_sgdp_figures.output,

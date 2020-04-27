@@ -10,3 +10,4 @@ plots/
 data/
 src/__pycache__/
 snakemake_output/
+*.tar.gz

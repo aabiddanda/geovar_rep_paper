@@ -1,22 +1,10 @@
 #!/bin/python3
 
-
-
 # Including all of the different snakefiles
 include: 'snakefiles/geodist.snake'
 include: 'snakefiles/subsets.snake'
 include: 'snakefiles/plotting.snake'
 
-
-# rule download_data:
-  # output:
-    # "data/"
-  # shell:
-    # """
-      # wget <data.tar.gz>
-      # tar -xvf <data.tar.gz>
-    # """
-  
     
 rule download_data_w_geodist:
   output:
@@ -26,4 +14,3 @@ rule download_data_w_geodist:
       wget -O data_w_geodist.tar.gz  https://www.dropbox.com/s/hno1so98qcghsli/data_w_geodist.tar.gz?dl=0
       tar -xvf data_w_geodist.tar.gz
     """
-
