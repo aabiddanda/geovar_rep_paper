@@ -41,7 +41,8 @@ rule plot_overall_figures:
     overall_5bin = 'plots/overall_figs/superpops.5percent.all.pdf',
     overall_5bin_nosing = 'plots/overall_figs/superpops.5percent.nosingletons.pdf',
     overall_1bin = 'plots/overall_figs/superpops.1percent.all.pdf',
-    overall_1bin_nosing = 'plots/overall_figs/superpops.1percent.nosingletons.pdf'
+    overall_1bin_nosing = 'plots/overall_figs/superpops.1percent.nosingletons.pdf',
+    overall_fullpop_5bin = 'plots/overall_figs/pops.5percent.all.pdf'
   shell:
     """
       cd doc/
