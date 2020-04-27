@@ -38,7 +38,7 @@ rule estimate_allele_freq:
   """
   input:
     vcf = lambda wildcards : VCF_DICT[wildcards.PREFIX][int(wildcards.CHROM)],
-    pops = 'params/parfiles/{poplist}.txt'
+    pops = 'params/parfiles/poplists/{poplist}.txt'
   output:
     tmp_vcf = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM,\d+}.biallelic_snps.{poplist}.frq.vcf.gz'),
     freq = TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM,\d+}.biallelic_snps.{poplist}.frq.strat.gz'
@@ -54,8 +54,8 @@ rule calc_mac_total:
   """
   input:
     freq = rules.estimate_allele_freq.output.freq,
-    pops = 'params/poplists/{poplist}.txt',
-    pop_labels = 'params/poplists/{poplist}_panel.txt'
+    pops = 'params/parfiles/poplists/{poplist}.txt',
+    pop_labels = 'params/parfiles/poplists/{poplist}_panel.txt'
   output:
     mac_temp = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.mac.txt.tmp.gz'),
     total_temp = temp(TMP_DIR + 'freq_set/{PREFIX}_chr{CHROM, \d+}.biallelic_snps.{poplist}.total.txt.tmp.gz'),

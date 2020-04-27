@@ -13,5 +13,6 @@ dependencies:
   - tqdm
   - pyliftover
   - snakemake-minimal
+  - htslib
 prefix: /Users/danielrice/miniconda3/envs/geodist
 

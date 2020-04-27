@@ -1,7 +1,6 @@
 # geodist_rep_paper
 Repository to replicate results from the GeoDist paper
 
-
 ## Installation Requirements
 
 We have setup an [Anaconda](https://www.anaconda.com/distribution/) environment to ensure accurate replication of results and management of dependencies. We suggest using this with miniconda. You can create the relevant environment by running:
@@ -13,27 +12,17 @@ conda activate geodist
 
 ## Working from intermediate data
 
-While it is entirely possible to replicate the analyses from the original 30x WGS variant-calls, some of these steps are less idealized for replication on a laptop. To start from a reasonable intermediate datapoint we have the following pre-packaged datasets (allele frequency tables) that have been computed and can be downloaded using the following commands:
+The step of generating "Geographic distribution Codes" for the entire NYGC 1000 Genomes hg38 dataset takes ~40 minutes due to iterating over all of the variants. If you are interesting in using the same allele frequency binning that we have, we highly suggest downloading an pre-computed dataset below:
 
 ```
-wget <dropbox link>
-tar -xvf <data.tar.gz>
+snakemake download_data_w_geodist --cores <number of cores> 
 ```
 
-The prepackaged datasets contain: (1) an allele frequency table and (2) the relevant SNP lists for comparing across datasets. 
-
-Alternatively, the step of generating "Geographic distribution Codes" for the entire NYGC 1000 Genomes hg38 dataset takes ~40 minutes due to iterating over all of the variants. If you are interesting in using the same allele frequency binning that we have, we highly suggest downloading this dataset. If you would like to avoid this step and use the pre-specified codes we have generated in our analysis:
-
-```
-wget <dropbox link here>
-tar -xvf <data_w_geodist.tar.gz>
-```
-
-You can execute either of these steps using `snakemake` as `snakemake download_data` or `snakemake download_data_w_geodist`.
+If you are interested in generating the geodist codes from scratch - remove the `data/geodist` subdirectory and then run the following command to regenerate all plots. Be warned that this can take a considerable amount of time and is best done on a HPC cluster.
 
 ## Generating visual results 
 
-If you have the `geodist` conda environment activated, all you should need to do in order to recreate the various plots :
+If you have the `geodist` conda environment activated, to recreate the main plots you will have to run:
 
 ```
 snakemake gen_all_plots --cores <number of cores> --dryrun 

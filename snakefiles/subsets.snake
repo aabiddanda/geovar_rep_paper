@@ -78,8 +78,8 @@ rule subset_freq:
     poplist='pops|superpops|superpops_amended|superpops_amended2'
   shell:
     """
-    awk \'NR == FNR {{a[$1,$2]++; next}} ($1,$2) in a\' <(zcat {input.subset}) <(zcat {input.freq_table}) | bgzip -@10 > {output.freq_subset_tmp_total}
-    zcat {input.freq_table} | head -n 1 | bgzip > {output.freq_subset_tmp_header}
+    awk \'NR == FNR {{a[$1,$2]++; next}} ($1,$2) in a\' <(zcat < {input.subset}) <(zcat < {input.freq_table}) | bgzip > {output.freq_subset_tmp_total}
+    zcat < {input.freq_table} | head -n 1 | bgzip > {output.freq_subset_tmp_header}
     cat {output.freq_subset_tmp_header} {output.freq_subset_tmp_total} > {output.freq_subset}
     """
 
@@ -99,7 +99,6 @@ rule run_geodist_collapsed_subset:
     bins = bin_dict[wildcards.NCAT]
     shell('python3 src/geodist.py --freqs {input.total_freqs} --bins \"{bins}\" | bgzip > {output.geodist}')
 
-
 # ------------- Counting & Subsetting ---------------- #
 rule count_geodist_categories_subset:
   """ Count the geodist categories of each subset of variants """
@@ -115,14 +114,14 @@ rule count_geodist_categories_subset:
     NCAT='3|4|3x'
   shell:
     '''
-    zcat {input.geodist} | awk \'NR > 1 {{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_tmp_subset}
-    npops=$(zcat {output.geodist_tmp_subset} | awk \'{{ print length($1)}}\' | head -n 1)
+    zcat < {input.geodist} | awk \'NR > 1 {{counts[$7]++}} END{{for(i in counts){{print i,counts[i];}}}}\' | sort -n -k1,1 | gzip > {output.geodist_tmp_subset}
+    npops=$(zcat < {output.geodist_tmp_subset} | awk \'{{ print length($1)}}\' | head -n 1)
     empty_geodist=$(printf \'0%.0s\' $(seq 1 $npops))
     nsnps_raw=$(zcat {input.subset} | wc -l)
     nsnps_1kg=$(zcat {output.geodist_tmp_subset} |awk \'{{sum+=$2}} END {{print sum}}\')
     echo $nsnps_raw $nsnps_1kg
     diff_snps=$(echo \"$nsnps_raw - $nsnps_1kg\" | bc) 
-    echo \"$empty_geodist $diff_snps\" | bgzip | zcat - {output.geodist_tmp_subset} | bgzip > {output.geodist_subset}
+    echo \"$empty_geodist $diff_snps\" | bgzip | zcat  - {output.geodist_tmp_subset} | bgzip > {output.geodist_subset}
     '''
 
 rule count_geodist_categories_subset_all:
