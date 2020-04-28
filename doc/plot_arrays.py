@@ -41,7 +41,7 @@ def debox(ax):
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
-figdir = '../plots/array_figs/'
+figdir = '../plots/figure6/'
 os.makedirs(figdir, exist_ok=True)
 # -
 
@@ -79,4 +79,4 @@ for i in range(n_arrays):
 # -
 
 f, axs = plot_multiple_geodist(array_geodists, array_file_lists, ylabel = 'Cumulative fraction of 1000G variants', hwidth=0.3) 
-plt.savefig(figdir + 'array_fig.5percent.pdf', bbox_inches='tight')
+plt.savefig(figdir + 'fig6.pdf', bbox_inches='tight')

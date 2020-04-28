@@ -41,7 +41,7 @@ def debox(ax):
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
-figdir = '../plots/sgdp_figs/'
+figdir = '../plots/figure5/'
 os.makedirs(figdir, exist_ok=True)
 # -
 
@@ -100,10 +100,6 @@ for i in Han_names[0:1]:
         sgdp_paired_total.append('%s_%s' % (i,j))
         sgdp_paired_total_alt.append('%s\n%s' % (i,j))
         sgdp_pop_pairs.append('Han/Han')
-        
-print(sgdp_paired_total)
-print(sgdp_pop_pairs)
-print(len(sgdp_pop_pairs))
 
 # +
 # Defining meta-variables
@@ -138,7 +134,7 @@ subset_pop_pairs = [sgdp_pop_pairs[x] for x in idxs]
 plot_multiple_geodist(subset_geodist, subset_pop_pairs, ylabel='Cumulative fraction of 1000G variants', hwidth=0.3);
 
 # Testing the plots out here
-plt.savefig(figdir + 'sgdp_panel_geodist.filt_lvl1.pdf', bbox_inches='tight', dpi=300)
+plt.savefig(figdir + 'fig5.pdf', bbox_inches='tight', dpi=300)
 
 # +
 # print multiple panels

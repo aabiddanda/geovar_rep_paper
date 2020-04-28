@@ -155,10 +155,9 @@ for ax in fig.axes:
     ax.xaxis.set_tick_params(width=lw)
     no_spines(ax)
 
-figdir = '../plots/theory_figs/'
+figdir = '../plots/figure4/'
 os.makedirs(figdir, exist_ok=True)
-plt.savefig(figdir + 'heuristic_fig.pdf', bbox_inches='tight')
-# plt.savefig(f'heuristic_fig.png', bbox_inches='tight')
+plt.savefig(figdir + 'fig4BC.pdf', bbox_inches='tight')
 # -
 
 

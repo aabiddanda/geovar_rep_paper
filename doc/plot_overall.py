@@ -41,8 +41,12 @@ def debox(ax):
     ax.spines['top'].set_visible(False)
     
 # Setting the x-size and y-size for the entire figure...
-figdir = '../plots/overall_figs/'
-os.makedirs(figdir, exist_ok=True)
+figdir1 = '../plots/figure3/'
+os.makedirs(figdir1, exist_ok=True)
+figdir2 = '../plots/figureS1/'
+os.makedirs(figdir2, exist_ok=True)
+figdir3 = '../plots/figure7/'
+os.makedirs(figdir3, exist_ok=True)
 # -
 
 # # Plotting GeoDist (Superpops)
@@ -71,7 +75,7 @@ ncat_str = '3x'
 fig,axs = plot_geodist_w_percentages(geodist_superpops, subset='Biallelic SNVs', 
                                      ylabel='Cumulative fraction of 1000G variants', 
                                      xsize=1.5, ysize=4)
-plt.savefig(figdir + 'superpops.5percent.all.pdf', bbox_inches='tight')
+plt.savefig(figdir1 + 'fig3B.pdf', bbox_inches='tight')
 # -
 
 # ### Removing Singletons from the Data
@@ -96,7 +100,7 @@ ncat_str = '3x'
 fig,axs = plot_geodist_w_percentages(geodist_superpops, subset='Singletons Removed', 
                                      ylabel='Cumulative fraction of 1000G variants', 
                                      xsize=1.5, ysize=4.5)
-plt.savefig(figdir + 'superpops.5percent.nosingletons.pdf', bbox_inches='tight')
+plt.savefig(figdir1 + 'fig3C.pdf', bbox_inches='tight')
 # -
 
 # ## Plots with an MAF > 1% boundary
@@ -121,7 +125,7 @@ ncat_str = '3x'
 fig,axs = plot_geodist_w_percentages(geodist_superpops, subset='Biallelic SNVs', 
                                      ylabel='Cumulative fraction of 1000G variants', 
                                      xsize=1.5, ysize=4)
-plt.savefig(figdir + 'superpops.1percent.all.pdf', bbox_inches='tight')
+plt.savefig(figdir2 + 'figS1A.pdf', bbox_inches='tight')
 
 # +
 #1. Loading superpopulation data
@@ -143,7 +147,7 @@ ncat_str = '3x'
 fig,axs = plot_geodist_w_percentages(geodist_superpops, subset='Singletons Removed', 
                                      ylabel='Cumulative fraction of 1000G variants', 
                                      xsize=1.5, ysize=4)
-plt.savefig(figdir + 'superpops.1percent.nosingletons.pdf', bbox_inches='tight')
+plt.savefig(figdir2 + 'figS1B.pdf', bbox_inches='tight')
 # -
 
 # # Full Population Plots
@@ -169,4 +173,4 @@ fig,axs = plot_geodist_w_percentages(geodist_pops, subset='Biallelic SNVs',
                                      ylabel='Cumulative fraction of 1000G variants', 
                                      xsize=4, ysize=7, superpops=[5, 9, 14, 19])
 
-plt.savefig(figdir + 'pops.5percent.all.pdf', bbox_inches='tight')
+plt.savefig(figdir3 + 'fig7.pdf', bbox_inches='tight')

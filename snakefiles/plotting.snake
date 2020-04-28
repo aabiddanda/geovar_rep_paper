@@ -25,7 +25,7 @@ rule plot_full_pops:
   input:
     'data/freq/new_1kg_nyc_hg38_filt_chr22.biallelic_snps.pops.freq.txt.gz'
   output:
-    'plots/full_pop_plots/full_pop_fig1.pdf'
+    fig1='plots/figure1/fig1.pdf'
   shell:
     """
     cd doc/
@@ -38,11 +38,11 @@ rule plot_overall_figures:
   input:
     rules.plotting_prelims.input
   output:
-    overall_5bin = 'plots/overall_figs/superpops.5percent.all.pdf',
-    overall_5bin_nosing = 'plots/overall_figs/superpops.5percent.nosingletons.pdf',
-    overall_1bin = 'plots/overall_figs/superpops.1percent.all.pdf',
-    overall_1bin_nosing = 'plots/overall_figs/superpops.1percent.nosingletons.pdf',
-    overall_fullpop_5bin = 'plots/overall_figs/pops.5percent.all.pdf'
+    fig3B = 'plots/figure3/fig3B.pdf',
+    fig3C = 'plots/figure3/fig3C.pdf',
+    figS1A = 'plots/figureS1/figS1A.pdf',
+    figS1B = 'plots/figureS1/figS1B.pdf',
+    fig7 = 'plots/figure7/fig7.pdf'
   shell:
     """
       cd doc/
@@ -56,7 +56,7 @@ rule plot_genotyping_array_figures:
   input:
     rules.plotting_prelims.input
   output:
-    array_gallery = 'plots/array_figs/array_fig.5percent.pdf'
+    array_gallery = 'plots/figure6/fig6.pdf'
   shell:
     """
       cd doc/
@@ -69,7 +69,7 @@ rule plot_sgdp_figures:
   input:
     rules.plotting_prelims.input
   output:
-    sgdp_gallery = 'plots/sgdp_figs/sgdp_panel_geodist.filt_lvl1.pdf'
+    sgdp_gallery = 'plots/figure5/fig5.pdf'
   shell:
     """
       cd doc/
@@ -80,13 +80,13 @@ rule plot_sgdp_figures:
 #--------------- 5. Theory Figures Generation ------------- #
 rule plot_theory_figures:
   output:
-    theory_geodist_gallery = 'plots/theory_figs/template_theory_fig.pdf',
-    theory_envelopes = 'plots/theory_figs/heuristic_fig.pdf'
+    theory_geodist_gallery = 'plots/figure4/fig4A.pdf',
+    theory_envelopes = 'plots/figure4/fig4BC.pdf'
   shell:
     """
       cd doc/
-      python3 -W ignore heuristic_figure.py
       python3 -W ignore plot_jsfs_theory.py
+      python3 -W ignore heuristic_figure.py
       cd ..
     """
     

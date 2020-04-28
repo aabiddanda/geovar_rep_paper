@@ -38,7 +38,7 @@ def debox(ax):
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
-figdir = '../plots/theory_figs/'
+figdir = '../plots/figure4/'
 os.makedirs(figdir, exist_ok=True)
 # -
 
@@ -147,4 +147,4 @@ bottom_left_ax.set_xticklabels([]); bottom_left_ax.set_xticks([]);
 bottom_center_ax.set_yticklabels([]);
 bottom_right_ax.set_yticklabels([]);
 
-plt.savefig(figdir + 'template_theory_fig.pdf', bbox_inches='tight')
+plt.savefig(figdir + 'fig4A.pdf', bbox_inches='tight')

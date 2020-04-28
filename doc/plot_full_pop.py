@@ -34,7 +34,7 @@ def debox(ax):
     ax.spines['left'].set_visible(False)
     ax.spines['top'].set_visible(False)
     
-figdir = '../plots/full_pop_plots/'
+figdir = '../plots/figure1/'
 os.makedirs(figdir, exist_ok=True)
 
 # %matplotlib inline
@@ -131,6 +131,6 @@ cbar.set_label(label="Globally minor allele frequency", fontsize=16)
 
 
 plt.tight_layout()
-plt.savefig(figdir + 'full_pop_fig1.pdf', dpi=300, bbox_inches='tight')
+plt.savefig(figdir + 'fig1.pdf', dpi=300, bbox_inches='tight')
 
 
