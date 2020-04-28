@@ -29,7 +29,7 @@ rule plot_full_pops:
   shell:
     """
     cd doc/
-    python3 plot_full_pop.py
+    python3 -W ignore plot_full_pop.py
     cd ..
     """
 
@@ -46,7 +46,7 @@ rule plot_overall_figures:
   shell:
     """
       cd doc/
-      python3 plot_overall.py
+      python3 -W ignore plot_overall.py
       cd ..
     """
 
@@ -60,7 +60,7 @@ rule plot_genotyping_array_figures:
   shell:
     """
       cd doc/
-      python3 plot_arrays.py
+      python3 -W ignore plot_arrays.py
       cd ..
     """
 
@@ -73,7 +73,7 @@ rule plot_sgdp_figures:
   shell:
     """
       cd doc/
-      python3 plot_sgdp.py
+      python3 -W ignore plot_sgdp.py
       cd ..
     """
     
@@ -85,8 +85,8 @@ rule plot_theory_figures:
   shell:
     """
       cd doc/
-      python3 heuristic_figure.py
-      python3 plot_jsfs_theory.py
+      python3 -W ignore heuristic_figure.py
+      python3 -W ignore plot_jsfs_theory.py
       cd ..
     """
     
