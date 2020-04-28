@@ -1,5 +1,14 @@
 # geodist_rep_paper
-Repository to replicate results from the GeoDist paper
+Repository to replicate results from the GeoDist paper. 
+
+## Cloning from github
+
+To bring the repository to your local computer, please use `git clone` as follows:
+
+```
+git clone https://github.com/aabiddanda/geodist_rep_paper.git
+cd geodist_rep_paper
+```
 
 ## Installation Requirements
 
@@ -15,7 +24,7 @@ conda activate geodist
 The pipeline we have written uses the popular workflow managment system, [snakemake](https://snakemake.readthedocs.io/en/stable/). We refer users to the documentation there in order to understand the various rules and dependencies. The step of generating "Geographic distribution Codes" for the entire NYGC 1000 Genomes hg38 dataset takes ~40 minutes due to iterating over all ~92 million variants. If you are interesting in using the same allele frequency binning that we have, we highly suggest downloading an pre-computed dataset below:
 
 ```
-snakemake download_minimal_data --cores <number of cores> 
+snakemake download_minimal_data --cores 1 
 ```
 
 If you are interested in generating the geodist codes from scratch - remove the `data/geodist` subdirectory and then run the command in the following section to regenerate all plots. Be warned that this can take a considerable amount of time and is best done on a HPC cluster (and has only been tested in Linux).
@@ -25,7 +34,7 @@ If you are interested in generating the geodist codes from scratch - remove the 
 If you have the `geodist` conda environment activated, to recreate the main plots you will have to run:
 
 ```
-snakemake gen_all_plots --cores <number of cores> --dryrun 
+snakemake gen_all_plots --cores 1 --dryrun
 ```
 
 You can remove the `--dryrun` flag to actually run the pipeline. After running the pipeline, you should be able to see the major figures in the `plots` directory as PDFs. Note that these are somewhat different from the versions in the manuscript as they have not been annotated.  

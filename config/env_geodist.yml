@@ -14,5 +14,6 @@ dependencies:
   - pyliftover
   - snakemake-minimal
   - htslib
+  - wget
 prefix: /Users/danielrice/miniconda3/envs/geodist
 
