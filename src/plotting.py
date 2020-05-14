@@ -291,7 +291,7 @@ class GeoDistPlot:
       ydist = (cum_frac[i] - prev)/2.
       fontscale = min(1., self.fontsize*fracs[i])
       nstr = '{:,}'.format(ns[i])
-      ax.text(x=0.01, y=prev+ydist, s = '%s (%d%%)' % (nstr,int(fracs[i]*100)), va='center', fontsize=self.fontsize*fontscale)
+      ax.text(x=0.01, y=prev+ydist, s = '%s (%d%%)' % (nstr,round(fracs[i]*100)), va='center', fontsize=self.fontsize*fontscale)
       prev = cum_frac[i]
     ax.set_ylim(0,1)
     return(ax)
