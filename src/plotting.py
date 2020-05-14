@@ -143,7 +143,7 @@ class GeoDistPlot:
     else:
       idx = np.where(self.orig_fgeodist >= max_freq)[0]
     assert(idx[0].size != 0)
-    # TODO : have this create a new variable and not reset
+    self.orig_fgeodist_alt = self.orig_fgeodist[idx]
     self.ngeodist = self.orig_ngeodist[idx]
     self.geodist = self.orig_geodist[idx]
     self.fgeodist = self.ngeodist / np.sum(self.ngeodist)
@@ -152,6 +152,7 @@ class GeoDistPlot:
     self.ngeodist = self.ngeodist[sorted_idx]
     self.geodist = self.geodist[sorted_idx]
     self.fgeodist = self.fgeodist[sorted_idx]
+    self.orig_fgeodist_alt = self.orig_fgeodist_alt[sorted_idx]
 
   def _add_cmap(self, base_cmap='Blues',
                 str_labels=['U', 'R', 'C'],
@@ -291,7 +292,7 @@ class GeoDistPlot:
       ydist = (cum_frac[i] - prev)/2.
       fontscale = min(1., self.fontsize*fracs[i])
       nstr = '{:,}'.format(ns[i])
-      ax.text(x=0.01, y=prev+ydist, s = '%s (%d%%)' % (nstr,round(fracs[i]*100)), va='center', fontsize=self.fontsize*fontscale)
+      ax.text(x=0.01, y=prev+ydist, s = '%s (%d%%)' % (nstr,round(self.orig_fgeodist_alt[i]*100)), va='center', fontsize=self.fontsize*fontscale)
       prev = cum_frac[i]
     ax.set_ylim(0,1)
     return(ax)
