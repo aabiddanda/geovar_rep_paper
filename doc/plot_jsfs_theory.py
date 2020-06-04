@@ -125,7 +125,7 @@ top_right_ax = fig.add_subplot(grid[0, 2])
 
 plot_div_model(top_right_ax, tdiv=t1, vbar=False, lw=2, admix=0.025, color='black', solid_capstyle='round')
 plot_div_model(top_center_ax, tdiv=t1, vbar=True, vbarlabel = '0.05 ', lw=2, color='black', solid_capstyle='round')
-plot_div_model(top_left_ax, tdiv=t2, vbar=True, vbarlabel = 'T/N= 0.5 ', lw=2, color='black', solid_capstyle='round')
+plot_div_model(top_left_ax, tdiv=t2, vbar=True, vbarlabel = r'$T/2N= 0.5$ ', lw=2, color='black', solid_capstyle='round')
 
 top_center_ax.set_title('Recent\n Divergence', fontsize=12)
 top_right_ax.set_title('Recent\n Admixture', fontsize=12)
